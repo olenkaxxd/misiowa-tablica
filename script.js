@@ -52,7 +52,6 @@ let images = [];
 let currentImage = null;
 let dragging = false;
 let resizing = false;
-let rotating = false;
 let offsetX = 0;
 let offsetY = 0;
 let handleSize = 10;
@@ -99,16 +98,16 @@ canvas.addEventListener("mousedown", e => {
 
   for (let i = images.length-1; i>=0; i--) {
     const img = images[i];
-    // prostokąt obrazu w obróconych współrzędnych
     const dx = mx - (img.x + img.width/2);
     const dy = my - (img.y + img.height/2);
     const angle = -img.rotation * Math.PI / 180;
     const rx = dx*Math.cos(angle) - dy*Math.sin(angle);
     const ry = dx*Math.sin(angle) + dy*Math.cos(angle);
+
     if (rx > -img.width/2 && rx < img.width/2 && ry > -img.height/2 && ry < img.height/2) {
       currentImage = img;
 
-      // sprawdź czy kliknięto uchwyt do skalowania
+      // sprawdzenie uchwytu do skalowania
       if (rx > img.width/2 - handleSize && ry > img.height/2 - handleSize) {
         resizing = true;
       } else {
@@ -172,19 +171,47 @@ window.addEventListener("mouseup", () => {
 // -------------------- Paste Image --------------------
 window.addEventListener("paste", e => {
   const items = e.clipboardData.items;
-  for (let i=0; i<items.length; i++) {
-    if (items[i].type.indexOf("image") === -1) continue;
-    const blob = items[i].getAsFile();
-    const url = URL.createObjectURL(blob);
-    const img = new Image();
-    img.onload = () => {
-      const obj = { img, x: 100, y: 100, width: img.width/2, height: img.height/2, rotation: 0 };
-      images.push(obj);
-      redraw();
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
-    currentImage = images[images.length]; 
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+
+    if (item.type.indexOf("image") !== -1) {
+      // obraz z clipboard
+      const blob = item.getAsFile();
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const obj = { img, x: 100, y: 100, width: img.width/2, height: img.height/2, rotation: 0 };
+        images.push(obj);
+        redraw();
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    } else if (item.type === "text/html") {
+      item.getAsString(html => {
+        const srcMatch = html.match(/src="([^"]+)"/);
+        if (srcMatch) {
+          const img = new Image();
+          img.onload = () => {
+            const obj = { img, x: 100, y: 100, width: img.width/2, height: img.height/2, rotation: 0 };
+            images.push(obj);
+            redraw();
+          };
+          img.src = srcMatch[1];
+        }
+      });
+    } else if (item.type === "text/plain") {
+      item.getAsString(str => {
+        if (str.startsWith("data:image")) {
+          const img = new Image();
+          img.onload = () => {
+            const obj = { img, x: 100, y: 100, width: img.width/2, height: img.height/2, rotation: 0 };
+            images.push(obj);
+            redraw();
+          };
+          img.src = str;
+        }
+      });
+    }
   }
 });
 
