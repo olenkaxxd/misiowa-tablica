@@ -1,20 +1,26 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tablica Web – Realtime</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8">
+  <title>Misiowa Tablica – Realtime</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Firebase v8 SDK -->
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>📝 Tablica Web (Realtime)</h1>
 
-  <textarea id="board" placeholder="Pisz tutaj..."></textarea>
+<div id="toolbar">
+  <button id="pen">✏️</button>
+  <button id="eraser">🧽</button>
+  <button id="clear">🧹</button>
+</div>
 
-  <script src="script.js"></script>
+<canvas id="board"></canvas>
+
+<script src="script.js"></script>
 </body>
 </html>
