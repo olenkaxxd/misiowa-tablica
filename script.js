@@ -81,17 +81,23 @@ strokesRef.limitToLast(5000).on("child_added", snap => {
   drawLine(s.x1, s.y1, s.x2, s.y2, s.color, s.size);
 });
 
-// save do PDF
+// save do PDF z możliwością wyboru lokalizacji przez użytkownika
 saveBtn.onclick = () => {
-  const dataURL = canvas.toDataURL("image/png");
+  try {
+    const dataURL = canvas.toDataURL("image/png");
 
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({
-    orientation: "landscape",
-    unit: "px",
-    format: [canvas.width, canvas.height]
-  });
+    const { jsPDF } = window.jspdf;  
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "px",
+      format: [canvas.width, canvas.height]
+    });
 
-  pdf.addImage(dataURL, "PNG", 0, 0, canvas.width, canvas.height);
-  pdf.save("Misiowa_Tablica.pdf");
+    pdf.addImage(dataURL, "PNG", 0, 0, canvas.width, canvas.height);
+
+    // wywołanie okna wyboru miejsca zapisu
+    pdf.save("Misiowa_Tablica.pdf");
+  } catch (err) {
+    console.error("Błąd podczas zapisu PDF:", err);
+  }
 };
