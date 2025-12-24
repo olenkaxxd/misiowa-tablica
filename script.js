@@ -13,6 +13,7 @@ const strokesRef = db.ref("strokes");
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 
+// ustaw rozmiar canvas
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
@@ -22,15 +23,20 @@ let lastX = 0;
 let lastY = 0;
 
 // toolbar
-pen.onclick = () => tool = "pen";
-eraser.onclick = () => tool = "eraser";
+const penBtn = document.getElementById("pen");
+const eraserBtn = document.getElementById("eraser");
+const clearBtn = document.getElementById("clear");
+const saveBtn = document.getElementById("save");
 
-clear.onclick = () => {
+penBtn.onclick = () => tool = "pen";
+eraserBtn.onclick = () => tool = "eraser";
+
+clearBtn.onclick = () => {
   ctx.clearRect(0,0,canvas.width,canvas.height);
   strokesRef.remove();
 };
 
-// draw helpers
+// draw helper
 function drawLine(x1, y1, x2, y2, color, size) {
   ctx.strokeStyle = color;
   ctx.lineWidth = size;
@@ -74,3 +80,18 @@ strokesRef.limitToLast(5000).on("child_added", snap => {
   const s = snap.val();
   drawLine(s.x1, s.y1, s.x2, s.y2, s.color, s.size);
 });
+
+// save do PDF
+saveBtn.onclick = () => {
+  const dataURL = canvas.toDataURL("image/png");
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({
+    orientation: "landscape",
+    unit: "px",
+    format: [canvas.width, canvas.height]
+  });
+
+  pdf.addImage(dataURL, "PNG", 0, 0, canvas.width, canvas.height);
+  pdf.save("Misiowa_Tablica.pdf");
+};
