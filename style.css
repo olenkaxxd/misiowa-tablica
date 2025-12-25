@@ -113,3 +113,27 @@ canvas {
 .page-thumb.active {
   border-color: #007BFF;
 }
+.page-thumb {
+  position: relative;
+}
+
+.page-thumb .close {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  background: #ffffff;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+  color: #007BFF;
+  box-shadow: 0 2px 4px rgba(0,0,0,.3);
+}
+
+.page-thumb .close:hover {
+  background: #007BFF;
+  color: white;
+}
