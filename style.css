@@ -5,6 +5,7 @@ body {
   font-family: sans-serif;
 }
 
+/* ================= TOOLBAR ================= */
 #toolbar {
   position: fixed;
   top: 10px;
@@ -33,6 +34,82 @@ body {
   color: #007BFF;
 }
 
+/* ================= PALETA KOLORÓW ================= */
+.tool {
+  position: relative;
+}
+
+#colors {
+  display: none;
+  position: absolute;
+  top: 40px;
+  left: 0;
+  background: white;
+  padding: 6px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,.25);
+  white-space: nowrap;
+}
+
+#colors span {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  border-radius: 50%;
+  cursor: pointer;
+  margin: 3px;
+  border: 1px solid #aaa;
+}
+
+.tool:hover #colors {
+  display: block;
+}
+
+/* ================= CANVAS + KRATKA ================= */
 canvas {
   display: block;
+  width: 100vw;
+  height: 100vh;
+
+  /* kratka matematyczna */
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(#e0e0e0 1px, transparent 1px),
+    linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
+  background-size: 25px 25px;
+}
+
+/* ================= MINIATURY STRON ================= */
+#pages {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.page-thumb {
+  width: 48px;
+  height: 34px;
+  background: white;
+  border: 2px solid #999;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0,0,0,.25);
+  transition: transform 0.1s, border-color 0.2s;
+}
+
+.page-thumb:hover {
+  transform: scale(1.1);
+}
+
+.page-thumb.active {
+  border-color: #007BFF;
 }
