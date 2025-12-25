@@ -16,9 +16,8 @@
 </head>
 <body>
 
-<!-- TOOLBAR -->
 <div id="toolbar">
-  <div class="tool" id="pen">✏️
+  <div class="tool" id="pen" title="Długopis">✏️
     <div id="colors">
       <span data-color="#000000" style="background:#000;"></span>
       <span data-color="#ff0000" style="background:#f00;"></span>
@@ -29,16 +28,14 @@
       <span data-color="#00ffff" style="background:#0ff;"></span>
     </div>
   </div>
-  <button id="eraser">🧽</button>
-  <button id="clear">🧹</button>
-  <button id="addPage">➕</button>
-  <button id="save">💾</button>
+  <button id="eraser" title="Gumka">🧽</button>
+  <button id="clear" title="Czyść tablicę">🧹</button>
+  <button id="addPage" title="Nowa strona">➕</button>
+  <button id="save" title="Zapisz PDF">💾</button>
 </div>
 
-<!-- CANVAS -->
 <canvas id="board"></canvas>
 
-<!-- MINIATURY STRON -->
 <div id="pages"></div>
 
 <script src="script.js"></script>
