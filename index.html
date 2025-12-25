@@ -16,27 +16,29 @@
 </head>
 <body>
 
+<!-- ================= TOOLBAR ================= -->
 <div id="toolbar">
-  <div class="tool">
-    <button id="pen" title="Długopis">✏️</button>
+  <div class="tool" id="pen">✏️
     <div id="colors">
-      <span data-color="#000000" style="background:#000"></span>
-      <span data-color="#ff0000" style="background:#f00"></span>
-      <span data-color="#0000ff" style="background:#00f"></span>
-      <span data-color="#008000" style="background:#080"></span>
-      <span data-color="#ff00ff" style="background:#f0f"></span>
+      <span data-color="#000000" style="background:#000;"></span>
+      <span data-color="#ff0000" style="background:#f00;"></span>
+      <span data-color="#00ff00" style="background:#0f0;"></span>
+      <span data-color="#0000ff" style="background:#00f;"></span>
+      <span data-color="#ffff00" style="background:#ff0;"></span>
+      <span data-color="#ff00ff" style="background:#f0f;"></span>
+      <span data-color="#00ffff" style="background:#0ff;"></span>
     </div>
   </div>
-
-  <button id="eraser" title="Gumka">🧽</button>
-  <button id="clear" title="Wyczyść stronę">🧹</button>
-  <button id="save" title="Zapisz PDF">💾</button>
-  <button id="addPage" title="Nowa strona">➕</button>
+  <button id="eraser">🧽</button>
+  <button id="clear">🧹</button>
+  <button id="addPage">➕</button>
+  <button id="save">💾</button>
 </div>
 
+<!-- ================= CANVAS ================= -->
 <canvas id="board"></canvas>
 
-<!-- MINIATURY -->
+<!-- ================= MINIATURY STRON ================= -->
 <div id="pages"></div>
 
 <script src="script.js"></script>
