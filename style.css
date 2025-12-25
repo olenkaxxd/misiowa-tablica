@@ -4,7 +4,6 @@ body {
   font-family: sans-serif;
 }
 
-/* TOOLBAR */
 #toolbar {
   position: fixed;
   top: 10px;
@@ -33,13 +32,11 @@ body {
   color: #007BFF;
 }
 
-/* PALETA KOLORÓW */
 .tool { position: relative; }
 #colors { display: none; position: absolute; top: 40px; left: 0; background: white; padding: 6px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,.25); white-space: nowrap; }
 #colors span { width: 18px; height: 18px; display: inline-block; border-radius: 50%; cursor: pointer; margin: 3px; border: 1px solid #aaa; }
 #colors.active { display: block; }
 
-/* CANVAS + KRATKA */
 canvas {
   display: block;
   width: 100vw;
@@ -51,7 +48,6 @@ canvas {
   background-size: 25px 25px;
 }
 
-/* MINIATURY STRON */
 #pages {
   position: fixed;
   bottom: 10px;
