@@ -17,13 +17,27 @@
 <body>
 
 <div id="toolbar">
-  <button id="pen">✏️</button>
-  <button id="eraser">🧽</button>
-  <button id="clear">🧹</button>
-  <button id="save">💾</button>
+  <div class="tool">
+    <button id="pen" title="Długopis">✏️</button>
+    <div id="colors">
+      <span data-color="#000000" style="background:#000"></span>
+      <span data-color="#ff0000" style="background:#f00"></span>
+      <span data-color="#0000ff" style="background:#00f"></span>
+      <span data-color="#008000" style="background:#080"></span>
+      <span data-color="#ff00ff" style="background:#f0f"></span>
+    </div>
+  </div>
+
+  <button id="eraser" title="Gumka">🧽</button>
+  <button id="clear" title="Wyczyść stronę">🧹</button>
+  <button id="save" title="Zapisz PDF">💾</button>
+  <button id="addPage" title="Nowa strona">➕</button>
 </div>
 
 <canvas id="board"></canvas>
+
+<!-- MINIATURY -->
+<div id="pages"></div>
 
 <script src="script.js"></script>
 </body>
