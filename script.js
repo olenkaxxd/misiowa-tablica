@@ -1,4 +1,4 @@
-// -------------------- Firebase --------------------
+// ==================== FIREBASE ====================
 const firebaseConfig = {
   apiKey: "AIzaSyAU-m6n4AURX1VQL6BvKQKmA03WISQctgo",
   authDomain: "tablica-web.firebaseapp.com",
@@ -8,119 +8,121 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const strokesRef = db.ref("strokes");
+const pagesRef = db.ref("pages");
 
-// -------------------- Canvas --------------------
+// ==================== CANVAS ====================
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// -------------------- Toolbar --------------------
+// ==================== TOOLS ====================
 let drawing = false;
 let tool = "pen";
+let penColor = "#000000";
 let lastX = 0;
 let lastY = 0;
 
-const penBtn = document.getElementById("pen");
-const eraserBtn = document.getElementById("eraser");
-const clearBtn = document.getElementById("clear");
-const saveBtn = document.getElementById("save");
+// ==================== STRONY ====================
+let pages = [{
+  strokes: [],
+  images: []
+}];
+let currentPage = 0;
 
-penBtn.onclick = () => tool = "pen";
-eraserBtn.onclick = () => tool = "eraser";
+// ==================== OBRAZY ====================
+let currentImage = null;
+let dragging = false;
+let offsetX = 0;
+let offsetY = 0;
+let handleSize = 10;
 
-clearBtn.onclick = () => {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  strokesRef.remove();
-  images.length = 0;
-};
-
-// -------------------- Draw Helper --------------------
+// ==================== RYSOWANIE ====================
 function drawLine(x1, y1, x2, y2, color, size) {
   ctx.strokeStyle = color;
   ctx.lineWidth = size;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(x1,y1);
-  ctx.lineTo(x2,y2);
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
   ctx.stroke();
 }
-
-// -------------------- Image Handling --------------------
-let images = [];
-let currentImage = null;
-let dragging = false;
-let resizing = false;
-let offsetX = 0;
-let offsetY = 0;
-let handleSize = 10;
 
 function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // rysowanie linii z Firebase
-  strokesRef.once("value", snap => {
-    snap.forEach(child => {
-      const s = child.val();
-      drawLine(s.x1, s.y1, s.x2, s.y2, s.color, s.size);
-    });
+  pages[currentPage].strokes.forEach(s =>
+    drawLine(s.x1, s.y1, s.x2, s.y2, s.color, s.size)
+  );
+
+  pages[currentPage].images.forEach(img => {
+    ctx.save();
+    ctx.translate(img.x + img.width / 2, img.y + img.height / 2);
+    ctx.rotate(img.rotation * Math.PI / 180);
+    ctx.drawImage(
+      img.img,
+      -img.width / 2,
+      -img.height / 2,
+      img.width,
+      img.height
+    );
+
+    if (img === currentImage) {
+      ctx.strokeStyle = "red";
+      ctx.strokeRect(
+        -img.width / 2,
+        -img.height / 2,
+        img.width,
+        img.height
+      );
+    }
+    ctx.restore();
   });
 
-  // rysowanie obrazów
-  images.forEach(imgObj => {
-    ctx.save();
-    ctx.translate(imgObj.x + imgObj.width/2, imgObj.y + imgObj.height/2);
-    ctx.rotate(imgObj.rotation * Math.PI / 180);
-    ctx.drawImage(imgObj.img, -imgObj.width/2, -imgObj.height/2, imgObj.width, imgObj.height);
+  renderPages();
+}
 
-    // uchwyty dla wybranego obrazu
-    if (imgObj === currentImage) {
-      ctx.strokeStyle = 'red';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(-imgObj.width/2, -imgObj.height/2, imgObj.width, imgObj.height);
+// ==================== MINIATURY ====================
+function renderPages() {
+  const container = document.getElementById("pages");
+  container.innerHTML = "";
 
-      // róg do skalowania
-      ctx.fillStyle = 'blue';
-      ctx.fillRect(imgObj.width/2 - handleSize, imgObj.height/2 - handleSize, handleSize, handleSize);
-    }
-
-    ctx.restore();
+  pages.forEach((_, i) => {
+    const d = document.createElement("div");
+    d.className = "page-thumb" + (i === currentPage ? " active" : "");
+    d.textContent = i + 1;
+    d.onclick = () => {
+      currentPage = i;
+      currentImage = null;
+      redraw();
+    };
+    container.appendChild(d);
   });
 }
 
-// -------------------- Mouse Events --------------------
+// ==================== MYSZ ====================
 canvas.addEventListener("mousedown", e => {
   const mx = e.clientX;
   const my = e.clientY;
 
   currentImage = null;
 
-  for (let i = images.length-1; i>=0; i--) {
-    const img = images[i];
-    const dx = mx - (img.x + img.width/2);
-    const dy = my - (img.y + img.height/2);
-    const angle = -img.rotation * Math.PI / 180;
-    const rx = dx*Math.cos(angle) - dy*Math.sin(angle);
-    const ry = dx*Math.sin(angle) + dy*Math.cos(angle);
-
-    if (rx > -img.width/2 && rx < img.width/2 && ry > -img.height/2 && ry < img.height/2) {
+  for (let img of [...pages[currentPage].images].reverse()) {
+    if (
+      mx > img.x &&
+      mx < img.x + img.width &&
+      my > img.y &&
+      my < img.y + img.height
+    ) {
       currentImage = img;
-
-      // sprawdzenie uchwytu do skalowania
-      if (rx > img.width/2 - handleSize && ry > img.height/2 - handleSize) {
-        resizing = true;
-      } else {
-        dragging = true;
-        offsetX = dx;
-        offsetY = dy;
-      }
+      dragging = true;
+      offsetX = mx - img.x;
+      offsetY = my - img.y;
       redraw();
       return;
     }
   }
 
-  // jeśli nie kliknięto obrazu -> rysowanie
   drawing = true;
   lastX = mx;
   lastY = my;
@@ -130,16 +132,17 @@ canvas.addEventListener("mousemove", e => {
   const mx = e.clientX;
   const my = e.clientY;
 
-  if (resizing && currentImage) {
-    currentImage.width = Math.max(10, mx - currentImage.x);
-    currentImage.height = Math.max(10, my - currentImage.y);
-    redraw();
-    return;
-  }
-
   if (dragging && currentImage) {
-    currentImage.x = mx - offsetX - currentImage.width/2;
-    currentImage.y = my - offsetY - currentImage.height/2;
+    if (e.shiftKey) {
+      const cx = currentImage.x + currentImage.width / 2;
+      const cy = currentImage.y + currentImage.height / 2;
+      currentImage.rotation =
+        Math.atan2(my - cy, mx - cx) * (180 / Math.PI);
+    } else {
+      currentImage.x = mx - offsetX;
+      currentImage.y = my - offsetY;
+    }
+    saveToFirebase();
     redraw();
     return;
   }
@@ -151,12 +154,13 @@ canvas.addEventListener("mousemove", e => {
     y1: lastY,
     x2: mx,
     y2: my,
-    color: tool === "eraser" ? "#ffffff" : "#000000",
+    color: tool === "eraser" ? "#ffffff" : penColor,
     size: tool === "eraser" ? 20 : 3
   };
 
+  pages[currentPage].strokes.push(stroke);
+  saveToFirebase();
   drawLine(...Object.values(stroke));
-  strokesRef.push(stroke);
 
   lastX = mx;
   lastY = my;
@@ -165,67 +169,89 @@ canvas.addEventListener("mousemove", e => {
 window.addEventListener("mouseup", () => {
   drawing = false;
   dragging = false;
-  resizing = false;
 });
 
-// -------------------- Paste Image --------------------
-window.addEventListener("paste", e => {
-  const items = e.clipboardData.items;
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
+// ==================== DELETE ====================
+window.addEventListener("keydown", e => {
+  if (e.key === "Delete" && currentImage) {
+    pages[currentPage].images =
+      pages[currentPage].images.filter(i => i !== currentImage);
+    currentImage = null;
+    saveToFirebase();
+    redraw();
+  }
+});
 
-    if (item.type.indexOf("image") !== -1) {
-      // obraz z clipboard
-      const blob = item.getAsFile();
-      const url = URL.createObjectURL(blob);
+// ==================== PASTE IMAGE ====================
+window.addEventListener("paste", e => {
+  for (let item of e.clipboardData.items) {
+    if (item.type.includes("image")) {
       const img = new Image();
+      img.src = URL.createObjectURL(item.getAsFile());
       img.onload = () => {
-        const obj = { img, x: 100, y: 100, width: img.width/2, height: img.height/2, rotation: 0 };
-        images.push(obj);
+        pages[currentPage].images.push({
+          img,
+          x: 100,
+          y: 100,
+          width: img.width / 2,
+          height: img.height / 2,
+          rotation: 0
+        });
+        saveToFirebase();
         redraw();
-        URL.revokeObjectURL(url);
       };
-      img.src = url;
-    } else if (item.type === "text/html") {
-      item.getAsString(html => {
-        const srcMatch = html.match(/src="([^"]+)"/);
-        if (srcMatch) {
-          const img = new Image();
-          img.onload = () => {
-            const obj = { img, x: 100, y: 100, width: img.width/2, height: img.height/2, rotation: 0 };
-            images.push(obj);
-            redraw();
-          };
-          img.src = srcMatch[1];
-        }
-      });
-    } else if (item.type === "text/plain") {
-      item.getAsString(str => {
-        if (str.startsWith("data:image")) {
-          const img = new Image();
-          img.onload = () => {
-            const obj = { img, x: 100, y: 100, width: img.width/2, height: img.height/2, rotation: 0 };
-            images.push(obj);
-            redraw();
-          };
-          img.src = str;
-        }
-      });
     }
   }
 });
 
-// -------------------- Save do PDF --------------------
-saveBtn.onclick = () => {
-  const dataURL = canvas.toDataURL("image/png");
+// ==================== PRZYCISKI ====================
+document.getElementById("clear").onclick = () => {
+  pages[currentPage] = { strokes: [], images: [] };
+  saveToFirebase();
+  redraw();
+};
 
-  const { jsPDF } = window.jspdf;  
-  const pdf = new jsPDF({
-    orientation: "landscape",
-    unit: "px",
-    format: [canvas.width, canvas.height]
+document.getElementById("addPage").onclick = () => {
+  pages.push({ strokes: [], images: [] });
+  currentPage = pages.length - 1;
+  saveToFirebase();
+  redraw();
+};
+
+// ==================== PDF ====================
+document.getElementById("save").onclick = () => {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("landscape", "px", [
+    canvas.width,
+    canvas.height
+  ]);
+
+  pages.forEach((p, i) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    p.strokes.forEach(s =>
+      drawLine(s.x1, s.y1, s.x2, s.y2, s.color, s.size)
+    );
+    p.images.forEach(img =>
+      ctx.drawImage(img.img, img.x, img.y, img.width, img.height)
+    );
+    if (i > 0) pdf.addPage();
+    pdf.addImage(canvas.toDataURL(), "PNG", 0, 0);
   });
 
-  pdf.addImage(dataURL, "PNG", 0, 0, canvas.width, canvas.height);
   pdf.save("Misiowa_Tablica.pdf");
 };
+
+// ==================== FIREBASE SYNC ====================
+function saveToFirebase() {
+  pagesRef.set(pages);
+}
+
+pagesRef.on("value", snap => {
+  if (snap.exists()) {
+    pages = snap.val();
+    redraw();
+  }
+});
+
+// ==================== INIT ====================
+renderPages();
