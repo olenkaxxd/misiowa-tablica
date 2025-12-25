@@ -15,25 +15,16 @@ const ctx = canvas.getContext("2d");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
-// ================= TOOLS =================
+// ================= STATE =================
 let tool = "pen";
-let penColor = "#000000";
+let penColor = "#000";
 let drawing = false;
-let lastX = 0;
-let lastY = 0;
-
-// ================= STRONY =================
+let lastX = 0, lastY = 0;
 let pages = [];
 let currentPage = 0;
 
-// ================= IMAGES =================
-let currentImage = null;
-let dragging = false;
-let offsetX = 0;
-let offsetY = 0;
-
 // ================= DRAW =================
-function drawLine(s) {
+function drawStroke(s) {
   ctx.strokeStyle = s.color;
   ctx.lineWidth = s.size;
   ctx.lineCap = "round";
@@ -43,19 +34,20 @@ function drawLine(s) {
   ctx.stroke();
 }
 
-function redraw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function drawPage(page) {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  page.strokes.forEach(drawStroke);
 
-  pages[currentPage]?.strokes.forEach(drawLine);
-
-  pages[currentPage]?.images.forEach(img => {
-    ctx.save();
-    ctx.translate(img.x + img.w / 2, img.y + img.h / 2);
-    ctx.rotate(img.r);
-    ctx.drawImage(img.img, -img.w / 2, -img.h / 2, img.w, img.h);
-    ctx.restore();
+  page.images.forEach(img => {
+    const i = new Image();
+    i.src = img.src;
+    ctx.drawImage(i, img.x, img.y, img.w, img.h);
   });
+}
 
+function redraw() {
+  if (!pages[currentPage]) return;
+  drawPage(pages[currentPage]);
   renderPages();
 }
 
@@ -68,11 +60,25 @@ function renderPages() {
     const d = document.createElement("div");
     d.className = "page-thumb" + (i === currentPage ? " active" : "");
     d.textContent = i + 1;
+
     d.onclick = () => {
       currentPage = i;
-      currentImage = null;
       redraw();
     };
+
+    if (pages.length > 1) {
+      const x = document.createElement("div");
+      x.className = "close";
+      x.textContent = "✕";
+      x.onclick = e => {
+        e.stopPropagation();
+        pages.splice(i,1);
+        if (currentPage >= pages.length) currentPage--;
+        save();
+      };
+      d.appendChild(x);
+    }
+
     p.appendChild(d);
   });
 }
@@ -93,10 +99,8 @@ canvas.onmousemove = e => {
     );
   } else {
     pages[currentPage].strokes.push({
-      x1: lastX,
-      y1: lastY,
-      x2: e.clientX,
-      y2: e.clientY,
+      x1: lastX, y1: lastY,
+      x2: e.clientX, y2: e.clientY,
       color: penColor,
       size: 3
     });
@@ -112,21 +116,18 @@ window.onmouseup = () => drawing = false;
 
 // ================= PASTE IMAGE =================
 window.addEventListener("paste", e => {
-  e.preventDefault();
   [...e.clipboardData.items].forEach(item => {
     if (item.type.startsWith("image")) {
-      const img = new Image();
-      img.src = URL.createObjectURL(item.getAsFile());
-      img.onload = () => {
+      const file = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = () => {
         pages[currentPage].images.push({
-          img, x: 100, y: 100,
-          w: img.width / 2,
-          h: img.height / 2,
-          r: 0
+          src: reader.result,
+          x: 100, y: 100, w: 200, h: 150
         });
         save();
-        redraw();
       };
+      reader.readAsDataURL(file);
     }
   });
 });
@@ -138,23 +139,28 @@ eraser.onclick = () => tool = "eraser";
 clear.onclick = () => {
   pages[currentPage] = { strokes: [], images: [] };
   save();
-  redraw();
 };
 
 addPage.onclick = () => {
   pages.push({ strokes: [], images: [] });
   currentPage = pages.length - 1;
   save();
-  redraw();
 };
 
-// ================= COLORS =================
-document.querySelectorAll("#colors span").forEach(c => {
-  c.onclick = () => {
-    penColor = c.dataset.color;
-    tool = "pen";
-  };
-});
+// ================= PDF =================
+save.onclick = () => {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("landscape","px",[canvas.width,canvas.height]);
+
+  pages.forEach((p,i)=>{
+    drawPage(p);
+    if(i>0) pdf.addPage();
+    pdf.addImage(canvas.toDataURL(),"PNG",0,0);
+  });
+
+  redraw();
+  pdf.save("Misiowa_Tablica.pdf");
+};
 
 // ================= FIREBASE =================
 function save() {
