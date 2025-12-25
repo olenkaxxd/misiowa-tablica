@@ -1,10 +1,16 @@
 // ================= FIREBASE =================
-firebase.initializeApp({
-  apiKey: "AIzaSyAU-m6n4AURX1VQL6BvKQKmA03WISQctgo",
-  authDomain: "tablica-web.firebaseapp.com",
-  databaseURL: "https://tablica-web-default-rtdb.firebaseio.com",
-  projectId: "tablica-web"
-});
+const firebaseConfig = {
+  apiKey: "AIzaSyCAHhxEdW5LHUPrjocHQfRLJbgp5NqfPTg",
+  authDomain: "misiowa-tablica.firebaseapp.com",
+  databaseURL: "https://misiowa-tablica-default-rtdb.firebaseio.com",
+  projectId: "misiowa-tablica",
+  storageBucket: "misiowa-tablica.firebasestorage.app",
+  messagingSenderId: "827288542078",
+  appId: "1:827288542078:web:7ed3349add13c00713312f",
+  measurementId: "G-K5JSQ1THVT"
+};
+
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const pagesRef = db.ref("pages");
 
