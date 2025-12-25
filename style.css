@@ -1,7 +1,6 @@
 body {
   margin: 0;
   overflow: hidden;
-  background: #f0f0f0;
   font-family: sans-serif;
 }
 
@@ -20,7 +19,7 @@ body {
   align-items: center;
 }
 
-#toolbar button {
+#toolbar button, .tool {
   font-size: 22px;
   margin: 0 6px;
   cursor: pointer;
@@ -29,7 +28,7 @@ body {
   transition: transform 0.1s, color 0.2s;
 }
 
-#toolbar button:hover {
+#toolbar button:hover, .tool:hover {
   transform: scale(1.2);
   color: #007BFF;
 }
@@ -61,7 +60,7 @@ body {
   border: 1px solid #aaa;
 }
 
-.tool:hover #colors {
+#colors.active {
   display: block;
 }
 
@@ -70,8 +69,6 @@ canvas {
   display: block;
   width: 100vw;
   height: 100vh;
-
-  /* kratka matematyczna */
   background-color: #ffffff;
   background-image:
     linear-gradient(#e0e0e0 1px, transparent 1px),
@@ -104,6 +101,7 @@ canvas {
   font-size: 14px;
   box-shadow: 0 2px 5px rgba(0,0,0,.25);
   transition: transform 0.1s, border-color 0.2s;
+  position: relative;
 }
 
 .page-thumb:hover {
@@ -112,9 +110,6 @@ canvas {
 
 .page-thumb.active {
   border-color: #007BFF;
-}
-.page-thumb {
-  position: relative;
 }
 
 .page-thumb .close {
