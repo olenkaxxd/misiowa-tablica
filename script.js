@@ -11,8 +11,8 @@ const pagesRef = db.ref("pages");
 // ================= CANVAS =================
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
-canvas.width = innerWidth;
-canvas.height = innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 // ================= STATE =================
 let tool = "pen";
@@ -22,6 +22,7 @@ let lastX = 0, lastY = 0;
 let pages = [];
 let currentPage = 0;
 
+// ================= IMAGE STATE =================
 let currentImage = null;
 let dragging = false, resizing = false, rotating = false;
 let offsetX = 0, offsetY = 0;
@@ -31,7 +32,6 @@ let history = [];
 let historyIndex = -1;
 
 function saveHistory() {
-  // kopia głęboka strony
   const snapshot = JSON.parse(JSON.stringify(pages[currentPage]));
   history = history.slice(0, historyIndex + 1);
   history.push(snapshot);
@@ -66,7 +66,8 @@ function drawStroke(s) {
 }
 
 function drawPage(page) {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   page.strokes.forEach(drawStroke);
 
   page.images.forEach(img => {
@@ -127,9 +128,8 @@ canvas.onmousedown = e => {
   currentImage = null;
   resizing = rotating = false;
 
-  // wybór obrazu od góry
+  // wybór obrazu
   for (let img of [...pages[currentPage].images].reverse()) {
-    // przelicz współrzędne dla rotacji
     const cx = img.x + img.w/2;
     const cy = img.y + img.h/2;
     const dx = mx - cx;
@@ -143,7 +143,6 @@ canvas.onmousedown = e => {
       offsetX = dx;
       offsetY = dy;
 
-      // check róg skalowania
       if(rx > img.w/2 - 20 && ry > img.h/2 - 20) resizing = true;
       else if(e.shiftKey) rotating = true;
       else dragging = true;
@@ -155,7 +154,8 @@ canvas.onmousedown = e => {
 
   // jeśli nie obraz → rysowanie
   drawing = true;
-  lastX = mx; lastY = my;
+  lastX = mx;
+  lastY = my;
 };
 
 canvas.onmousemove = e => {
@@ -163,23 +163,20 @@ canvas.onmousemove = e => {
   if(dragging && currentImage){
     currentImage.x = mx - offsetX - currentImage.w/2;
     currentImage.y = my - offsetY - currentImage.h/2;
-    save();
-    redraw();
+    saveHistory(); save(); redraw();
     return;
   }
   if(resizing && currentImage){
     currentImage.w = Math.max(20, mx - currentImage.x);
     currentImage.h = Math.max(20, my - currentImage.y);
-    save();
-    redraw();
+    saveHistory(); save(); redraw();
     return;
   }
   if(rotating && currentImage){
     const cx = currentImage.x + currentImage.w/2;
     const cy = currentImage.y + currentImage.h/2;
     currentImage.r = Math.atan2(my-cy, mx-cx);
-    save();
-    redraw();
+    saveHistory(); save(); redraw();
     return;
   }
 
@@ -214,17 +211,11 @@ window.addEventListener("paste", e=>{
 });
 
 // ================= BUTTONS =================
-pen.onclick = () => tool="pen";
-eraser.onclick = () => tool="eraser";
-clear.onclick = ()=>{pages[currentPage]={strokes:[],images:[]}; saveHistory(); save(); redraw();};
-addPage.onclick = ()=>{pages.push({strokes:[],images:[]}); currentPage=pages.length-1; saveHistory(); save(); redraw();};
-
-// ================= COLORS =================
-document.querySelectorAll("#colors span").forEach(c=>{
-  c.onclick=()=>{
-    penColor=c.dataset.color; tool="pen";
-  }
-});
+pen.onclick = () => { tool="pen"; document.getElementById("colors").classList.toggle("active"); };
+eraser.onclick = () => { tool="eraser"; document.getElementById("colors").classList.remove("active"); };
+clear.onclick = ()=>{ pages[currentPage]={strokes:[],images:[]}; saveHistory(); save(); redraw(); };
+addPage.onclick = ()=>{ pages.push({strokes:[],images:[]}); currentPage=pages.length-1; saveHistory(); save(); redraw(); };
+document.querySelectorAll("#colors span").forEach(c=>{ c.onclick=()=>{ penColor=c.dataset.color; tool="pen"; document.getElementById("colors").classList.remove("active"); }; });
 
 // ================= PDF =================
 save.onclick=()=>{
@@ -241,7 +232,6 @@ save.onclick=()=>{
 
 // ================= FIREBASE =================
 function save(){ pagesRef.set(pages); }
-
 pagesRef.on("value", snap=>{
   if(snap.exists()){ pages=snap.val(); if(!pages[currentPage])currentPage=0; redraw(); }
   else { pages=[{strokes:[],images:[]}]; save(); }
