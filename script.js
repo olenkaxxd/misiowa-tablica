@@ -83,7 +83,17 @@ function renderPages(){
     if(pages.length>1){
       const close=document.createElement("div");
       close.className="close"; close.textContent="✕";
-      close.onclick=e=>{ e.stopPropagation(); pages.splice(i,1); if(currentPage>=pages.length) currentPage--; redraw(); saveToFirebase(); };
+      close.onclick=e=>{
+        e.stopPropagation();
+        pages.splice(i,1);
+        if(currentPage>=pages.length) currentPage=pages.length-1;
+        if(pages.length===0){
+          pages.push({strokes:[],images:[]});
+          currentPage=0;
+        }
+        redraw();
+        saveToFirebase();
+      };
       thumb.appendChild(close);
     }
     container.appendChild(thumb);
@@ -123,7 +133,15 @@ window.onmouseup=()=>{
 };
 
 // ================= PASTE IMAGE =================
-window.addEventListener("paste",e=>{ [...e.clipboardData.items].forEach(item=>{ if(item.type.startsWith("image")){ const file=item.getAsFile(); const reader=new FileReader(); reader.onload=()=>{ pages[currentPage].images.push({src:reader.result,x:100,y:100,w:200,h:150,r:0}); redraw(); saveHistory(); saveToFirebase(); }; reader.readAsDataURL(file); } }); });
+window.addEventListener("paste",e=>{
+  [...e.clipboardData.items].forEach(item=>{
+    if(item.type.startsWith("image")){
+      const file=item.getAsFile(); const reader=new FileReader();
+      reader.onload=()=>{ pages[currentPage].images.push({src:reader.result,x:100,y:100,w:200,h:150,r:0}); redraw(); saveHistory(); saveToFirebase(); };
+      reader.readAsDataURL(file);
+    }
+  });
+});
 
 // ================= BUTTONS =================
 pen.onclick=()=>{ tool="pen"; document.getElementById("colors").classList.toggle("active"); };
@@ -144,9 +162,9 @@ function savePDF(){
 
 // ================= FIREBASE =================
 function saveToFirebase(){ pagesRef.set(pages); }
-pagesRef.once("value",snap=>{
+pagesRef.on("value",snap=>{
   if(snap.exists()){ pages=snap.val(); if(!pages[currentPage]) currentPage=0; redraw(); }
-  else{ pages=[{strokes:[],images:[]}]; saveToFirebase(); }
+  else{ pages=[{strokes:[],images:[]}]; currentPage=0; saveToFirebase(); redraw(); }
 });
 
 // ================= UNDO/REDO =================
