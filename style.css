@@ -1,9 +1,16 @@
+/* ================= GLOBAL ================= */
 body {
   margin: 0;
   overflow: hidden;
+  background: #f0f0f0;
   font-family: sans-serif;
 }
 
+canvas {
+  display: block;
+}
+
+/* ================= TOOLBAR ================= */
 #toolbar {
   position: fixed;
   top: 10px;
@@ -25,6 +32,7 @@ body {
   border: none;
   background: none;
   transition: transform 0.1s, color 0.2s;
+  position: relative;
 }
 
 #toolbar button:hover, .tool:hover {
@@ -32,65 +40,85 @@ body {
   color: #007BFF;
 }
 
-.tool { position: relative; }
-#colors { display: none; position: absolute; top: 40px; left: 0; background: white; padding: 6px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,.25); white-space: nowrap; }
-#colors span { width: 18px; height: 18px; display: inline-block; border-radius: 50%; cursor: pointer; margin: 3px; border: 1px solid #aaa; }
-#colors.active { display: block; }
-
-canvas {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  background-color: #ffffff;
-  background-image:
-    linear-gradient(#e0e0e0 1px, transparent 1px),
-    linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
-  background-size: 25px 25px;
+/* ================= COLORS ================= */
+#colors {
+  display: none;
+  position: absolute;
+  top: 36px;
+  left: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 5px;
+  border-radius: 6px;
+  display: flex;
+  gap: 5px;
+  z-index: 11;
 }
 
+#colors.active { display: flex; }
+
+#colors span {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1px solid #0003;
+}
+
+/* ================= MINIATURY ================= */
 #pages {
   position: fixed;
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 10px;
+  gap: 8px;
   z-index: 10;
 }
 
 .page-thumb {
-  width: 48px;
-  height: 34px;
-  background: white;
-  border: 2px solid #999;
+  width: 40px;
+  height: 40px;
+  background: #ffffffcc;
   border-radius: 6px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  cursor: pointer;
+  align-items: center;
   font-weight: bold;
-  font-size: 14px;
-  box-shadow: 0 2px 5px rgba(0,0,0,.25);
-  transition: transform 0.1s, border-color 0.2s;
+  cursor: pointer;
   position: relative;
+  border: 2px solid transparent;
+  transition: transform 0.1s, border-color 0.2s;
 }
 
-.page-thumb:hover { transform: scale(1.1); }
-.page-thumb.active { border-color: #007BFF; }
+.page-thumb:hover {
+  transform: scale(1.1);
+}
 
+.page-thumb.active {
+  border-color: #007BFF;
+}
+
+/* ================= CLOSE BUTTON ================= */
 .page-thumb .close {
   position: absolute;
   top: -6px;
   right: -6px;
+  background: #ff4c4c;
+  color: #fff;
+  font-size: 12px;
   width: 16px;
   height: 16px;
-  background: #ffffff;
-  border-radius: 50%;
-  font-size: 12px;
-  line-height: 16px;
   text-align: center;
+  line-height: 16px;
+  border-radius: 50%;
   cursor: pointer;
-  color: #007BFF;
-  box-shadow: 0 2px 4px rgba(0,0,0,.3);
 }
-.page-thumb .close:hover { background: #007BFF; color: white; }
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 500px) {
+  #toolbar { padding: 6px 8px; }
+  #toolbar button, .tool { font-size: 18px; }
+  #colors span { width: 16px; height: 16px; }
+  .page-thumb { width: 32px; height: 32px; font-size: 14px; }
+}
