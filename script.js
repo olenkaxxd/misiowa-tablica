@@ -14,66 +14,20 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const pagesRef = db.ref("pages");
 
-// ================= FIREBASE =================
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const pagesRef = db.ref("pages");
-
 // ================= SYNC CONTROL =================
 let syncing = false;
-
-// zapis do Firebase (bez pętli i lagów)
 function saveToFirebase() {
-  if (syncing) return;
+  if(syncing) return;
   syncing = true;
-
-  pagesRef
-    .set(pages)
-    .finally(() => {
-      syncing = false;
-    });
+  pagesRef.set(pages).finally(() => syncing = false);
 }
 
-// ================= FIREBASE LISTENER =================
-pagesRef.on("value", snap => {
-
-  // 🔹 jeśli dane istnieją
-  if (snap.exists()) {
-    const data = snap.val();
-
-    // 🔒 WALIDACJA DANYCH
-    if (!Array.isArray(data) || data.length === 0) {
-      pages = [{ strokes: [], images: [] }];
-      currentPage = 0;
-      saveToFirebase();
-    } else {
-      pages = data;
-
-      // 🔒 zabezpieczenie aktualnej strony
-      if (currentPage >= pages.length) {
-        currentPage = 0;
-      }
-    }
-
-  } 
-  // 🔹 jeśli Firebase pusty (pierwsze wejście)
-  else {
-    pages = [{ strokes: [], images: [] }];
-    currentPage = 0;
-    saveToFirebase();
-  }
-
-  redraw(); // ⬅️ zawsze odśwież UI po synchronizacji
-});
-
-
-// ================= CANVAS =================
+// ================= STATE =================
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// ================= STATE =================
 let tool = "pen";
 let penColor = "#000000";
 let drawing = false;
@@ -81,12 +35,10 @@ let lastX = 0, lastY = 0;
 let pages = [];
 let currentPage = 0;
 
-// ================= IMAGE STATE =================
 let currentImage = null;
 let dragging = false, resizing = false, rotating = false;
 let offsetX = 0, offsetY = 0;
 
-// ================= UNDO / REDO =================
 let history = [];
 let historyIndex = -1;
 function saveHistory() {
@@ -100,7 +52,8 @@ function redo() { if(historyIndex>=history.length-1) return; historyIndex++; pag
 
 // ================= DRAW =================
 function drawStroke(s){
-  ctx.strokeStyle=s.color; ctx.lineWidth=s.size; ctx.lineCap="round"; ctx.beginPath(); ctx.moveTo(s.x1,s.y1); ctx.lineTo(s.x2,s.y2); ctx.stroke();
+  ctx.strokeStyle=s.color; ctx.lineWidth=s.size; ctx.lineCap="round"; 
+  ctx.beginPath(); ctx.moveTo(s.x1,s.y1); ctx.lineTo(s.x2,s.y2); ctx.stroke();
 }
 
 function drawPage(page){
@@ -113,8 +66,10 @@ function drawPage(page){
     const i = new Image(); i.src = img.src;
     ctx.drawImage(i,-img.w/2,-img.h/2,img.w,img.h);
     if(img===currentImage){
-      ctx.strokeStyle="red"; ctx.lineWidth=2; ctx.strokeRect(-img.w/2,-img.h/2,img.w,img.h);
-      ctx.fillStyle="blue"; ctx.fillRect(img.w/2-10,img.h/2-10,10,10);
+      ctx.strokeStyle="red"; ctx.lineWidth=2; 
+      ctx.strokeRect(-img.w/2,-img.h/2,img.w,img.h);
+      ctx.fillStyle="blue"; 
+      ctx.fillRect(img.w/2-10,img.h/2-10,10,10);
     }
     ctx.restore();
   });
@@ -133,40 +88,27 @@ function renderPages(){
 
   pages.forEach((page, index) => {
     const thumb = document.createElement("div");
-
-    // numer strony ZAWSZE = index + 1
     thumb.className = "page-thumb";
     if (index === currentPage) thumb.classList.add("active");
     thumb.textContent = index + 1;
 
-    // przełączanie strony
     thumb.onclick = () => {
       currentPage = index;
       currentImage = null;
       redraw();
     };
 
-    // przycisk X (usuwanie)
-    if (pages.length > 1) {
+    if(pages.length > 1){
       const close = document.createElement("div");
       close.className = "close";
       close.textContent = "✕";
-
-      close.onclick = (e) => {
+      close.onclick = e => {
         e.stopPropagation();
-
-        pages.splice(index, 1);
-
-        // korekta aktualnej strony
-        if (currentPage >= pages.length) {
-          currentPage = pages.length - 1;
-        }
-        if (currentPage < 0) currentPage = 0;
-
-        redraw();
-        saveToFirebase();
+        pages.splice(index,1);
+        if(currentPage >= pages.length) currentPage = pages.length-1;
+        if(currentPage<0) currentPage=0;
+        redraw(); saveToFirebase();
       };
-
       thumb.appendChild(close);
     }
 
@@ -174,12 +116,15 @@ function renderPages(){
   });
 }
 
-
 // ================= MOUSE =================
 canvas.onmousedown=e=>{
-  const mx=e.clientX,my=e.clientY; currentImage=null; dragging=resizing=rotating=false;
+  const mx=e.clientX,my=e.clientY; 
+  currentImage=null; dragging=resizing=rotating=false;
+
   for(let img of [...pages[currentPage].images].reverse()){
-    const cx=img.x+img.w/2,cy=img.y+img.h/2; const dx=mx-cx,dy=my-cy; const angle=-img.r;
+    const cx=img.x+img.w/2,cy=img.y+img.h/2;
+    const dx=mx-cx,dy=my-cy;
+    const angle=-img.r;
     const rx=dx*Math.cos(angle)-dy*Math.sin(angle), ry=dx*Math.sin(angle)+dy*Math.cos(angle);
     if(rx>-img.w/2&&rx<img.w/2&&ry>-img.h/2&&ry<img.h/2){
       currentImage=img; offsetX=dx; offsetY=dy;
@@ -207,57 +152,29 @@ window.onmouseup=()=>{
   drawing=false; dragging=false; resizing=false; rotating=false;
 };
 
-// ================= PASTE IMAGE (FAST) =================
-window.addEventListener("paste", e => {
-
-  const items = e.clipboardData?.items;
-  if (!items) return;
-
-  for (const item of items) {
-    if (!item.type.startsWith("image")) continue;
-
-    const file = item.getAsFile();
-    if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-
-      // 🔥 1. dodajemy LOKALNIE
-      pages[currentPage].images.push({
-        src: reader.result,
-        x: 120,
-        y: 120,
-        w: 240,
-        h: 180,
-        r: 0
-      });
-
-      redraw();        // ⚡ natychmiast
-      saveHistory();   // lokalne undo
-
-      // 🔥 2. sync do Firebase z opóźnieniem
-      setTimeout(saveToFirebase, 0);
+// ================= PASTE IMAGE =================
+window.addEventListener("paste", e=>{
+  [...e.clipboardData?.items || []].forEach(item=>{
+    if(!item.type.startsWith("image")) return;
+    const file=item.getAsFile();
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      pages[currentPage].images.push({src:reader.result,x:120,y:120,w:240,h:180,r:0});
+      redraw(); saveHistory(); setTimeout(saveToFirebase,0);
     };
-
     reader.readAsDataURL(file);
-    break; // tylko jeden obraz
-  }
+  });
 });
 
 // ================= BUTTONS =================
 pen.onclick=()=>{ tool="pen"; document.getElementById("colors").classList.toggle("active"); };
 eraser.onclick=()=>{ tool="eraser"; document.getElementById("colors").classList.remove("active"); };
 clear.onclick=()=>{ pages[currentPage]={strokes:[],images:[]}; redraw(); saveHistory(); saveToFirebase(); };
-addPage.onclick = () => {
-  pages.push({
-    strokes: [],
-    images: []
-  });
-
-  currentPage = pages.length - 1; // zawsze nowa = ostatnia
-  redraw();
-  saveToFirebase();
+addPage.onclick=()=>{
+  pages.push({strokes:[],images:[]});
+  currentPage=pages.length-1;
+  redraw(); saveToFirebase();
 };
 save.onclick=savePDF;
 document.querySelectorAll("#colors span").forEach(c=>{ c.onclick=()=>{ penColor=c.dataset.color; tool="pen"; document.getElementById("colors").classList.remove("active"); }; });
@@ -266,14 +183,33 @@ document.querySelectorAll("#colors span").forEach(c=>{ c.onclick=()=>{ penColor=
 function savePDF(){
   const { jsPDF }=window.jspdf;
   const pdf=new jsPDF("landscape","px",[canvas.width,canvas.height]);
-  pages.forEach((p,i)=>{ drawPage(p); if(i>0) pdf.addPage(); pdf.addImage(canvas.toDataURL(),"PNG",0,0); });
+  pages.forEach((p,i)=>{
+    drawPage(p);
+    if(i>0) pdf.addPage();
+    pdf.addImage(canvas.toDataURL(),"PNG",0,0);
+  });
   redraw();
   pdf.save("Misiowa_Tablica.pdf");
 }
 
-
-
-
+// ================= FIREBASE LISTENER =================
+pagesRef.on("value", snap=>{
+  if(snap.exists()){
+    const data = snap.val();
+    if(!Array.isArray(data) || data.length===0){
+      pages=[{strokes:[],images:[]}]; currentPage=0; saveToFirebase();
+    } else {
+      pages = data;
+      if(currentPage>=pages.length) currentPage=0;
+    }
+  } else {
+    pages=[{strokes:[],images:[]}]; currentPage=0; saveToFirebase();
+  }
+  redraw();
+});
 
 // ================= UNDO/REDO =================
-window.addEventListener("keydown",e=>{ if(e.ctrlKey&&e.key==="z") undo(); if(e.ctrlKey&&e.key==="y") redo(); });
+window.addEventListener("keydown", e=>{
+  if(e.ctrlKey&&e.key==="z") undo();
+  if(e.ctrlKey&&e.key==="y") redo();
+});
