@@ -12,32 +12,37 @@
   <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+  <!-- CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="toolbar">
-  <div class="tool" id="pen" title="Długopis">✏️
-    <div id="colors">
-      <span data-color="#000000" style="background:#000;"></span>
-      <span data-color="#ff0000" style="background:#f00;"></span>
-      <span data-color="#00ff00" style="background:#0f0;"></span>
-      <span data-color="#0000ff" style="background:#00f;"></span>
-      <span data-color="#ffff00" style="background:#ff0;"></span>
-      <span data-color="#ff00ff" style="background:#f0f;"></span>
-      <span data-color="#00ffff" style="background:#0ff;"></span>
+  <!-- TOOLBAR -->
+  <div id="toolbar">
+    <div class="tool" id="pen" title="Długopis">✏️
+      <div id="colors">
+        <span data-color="#000000" style="background:#000;"></span>
+        <span data-color="#ff0000" style="background:#f00;"></span>
+        <span data-color="#00ff00" style="background:#0f0;"></span>
+        <span data-color="#0000ff" style="background:#00f;"></span>
+        <span data-color="#ffff00" style="background:#ff0;"></span>
+        <span data-color="#ff00ff" style="background:#f0f;"></span>
+        <span data-color="#00ffff" style="background:#0ff;"></span>
+      </div>
     </div>
+    <button id="eraser" title="Gumka">🧽</button>
+    <button id="clear" title="Czyść tablicę">🧹</button>
+    <button id="addPage" title="Nowa strona">➕</button>
+    <button id="save" title="Zapisz PDF">💾</button>
   </div>
-  <button id="eraser" title="Gumka">🧽</button>
-  <button id="clear" title="Czyść tablicę">🧹</button>
-  <button id="addPage" title="Nowa strona">➕</button>
-  <button id="save" title="Zapisz PDF">💾</button>
-</div>
 
-<canvas id="board"></canvas>
+  <!-- CANVAS -->
+  <canvas id="board"></canvas>
 
-<div id="pages"></div>
+  <!-- MINIATURY -->
+  <div id="pages"></div>
 
-<script src="script.js"></script>
+  <!-- JS -->
+  <script src="script.js"></script>
 </body>
 </html>
