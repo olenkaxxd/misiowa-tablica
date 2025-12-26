@@ -75,30 +75,52 @@ function redraw(){
 
 // ================= MINIATURY =================
 function renderPages(){
-  const container=document.getElementById("pages"); container.innerHTML="";
-  pages.forEach((_,i)=>{
-    const thumb=document.createElement("div");
-    thumb.className="page-thumb"+(i===currentPage?" active":""); thumb.textContent=i+1;
-    thumb.onclick=()=>{ currentPage=i; currentImage=null; redraw(); };
-    if(pages.length>1){
-      const close=document.createElement("div");
-      close.className="close"; close.textContent="✕";
-      close.onclick=e=>{
+  const container = document.getElementById("pages");
+  container.innerHTML = "";
+
+  pages.forEach((page, index) => {
+    const thumb = document.createElement("div");
+
+    // numer strony ZAWSZE = index + 1
+    thumb.className = "page-thumb";
+    if (index === currentPage) thumb.classList.add("active");
+    thumb.textContent = index + 1;
+
+    // przełączanie strony
+    thumb.onclick = () => {
+      currentPage = index;
+      currentImage = null;
+      redraw();
+    };
+
+    // przycisk X (usuwanie)
+    if (pages.length > 1) {
+      const close = document.createElement("div");
+      close.className = "close";
+      close.textContent = "✕";
+
+      close.onclick = (e) => {
         e.stopPropagation();
-        pages.splice(i,1);
-        if(currentPage>=pages.length) currentPage=pages.length-1;
-        if(pages.length===0){
-          pages.push({strokes:[],images:[]});
-          currentPage=0;
+
+        pages.splice(index, 1);
+
+        // korekta aktualnej strony
+        if (currentPage >= pages.length) {
+          currentPage = pages.length - 1;
         }
+        if (currentPage < 0) currentPage = 0;
+
         redraw();
         saveToFirebase();
       };
+
       thumb.appendChild(close);
     }
+
     container.appendChild(thumb);
   });
 }
+
 
 // ================= MOUSE =================
 canvas.onmousedown=e=>{
