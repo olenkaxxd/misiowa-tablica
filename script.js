@@ -14,6 +14,59 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const pagesRef = db.ref("pages");
 
+// ================= FIREBASE =================
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const pagesRef = db.ref("pages");
+
+// ================= SYNC CONTROL =================
+let syncing = false;
+
+// zapis do Firebase (bez pętli i lagów)
+function saveToFirebase() {
+  if (syncing) return;
+  syncing = true;
+
+  pagesRef
+    .set(pages)
+    .finally(() => {
+      syncing = false;
+    });
+}
+
+// ================= FIREBASE LISTENER =================
+pagesRef.on("value", snap => {
+
+  // 🔹 jeśli dane istnieją
+  if (snap.exists()) {
+    const data = snap.val();
+
+    // 🔒 WALIDACJA DANYCH
+    if (!Array.isArray(data) || data.length === 0) {
+      pages = [{ strokes: [], images: [] }];
+      currentPage = 0;
+      saveToFirebase();
+    } else {
+      pages = data;
+
+      // 🔒 zabezpieczenie aktualnej strony
+      if (currentPage >= pages.length) {
+        currentPage = 0;
+      }
+    }
+
+  } 
+  // 🔹 jeśli Firebase pusty (pierwsze wejście)
+  else {
+    pages = [{ strokes: [], images: [] }];
+    currentPage = 0;
+    saveToFirebase();
+  }
+
+  redraw(); // ⬅️ zawsze odśwież UI po synchronizacji
+});
+
+
 // ================= CANVAS =================
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
@@ -154,22 +207,58 @@ window.onmouseup=()=>{
   drawing=false; dragging=false; resizing=false; rotating=false;
 };
 
-// ================= PASTE IMAGE =================
-window.addEventListener("paste",e=>{
-  [...e.clipboardData.items].forEach(item=>{
-    if(item.type.startsWith("image")){
-      const file=item.getAsFile(); const reader=new FileReader();
-      reader.onload=()=>{ pages[currentPage].images.push({src:reader.result,x:100,y:100,w:200,h:150,r:0}); redraw(); saveHistory(); saveToFirebase(); };
-      reader.readAsDataURL(file);
-    }
-  });
+// ================= PASTE IMAGE (FAST) =================
+window.addEventListener("paste", e => {
+
+  const items = e.clipboardData?.items;
+  if (!items) return;
+
+  for (const item of items) {
+    if (!item.type.startsWith("image")) continue;
+
+    const file = item.getAsFile();
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+
+      // 🔥 1. dodajemy LOKALNIE
+      pages[currentPage].images.push({
+        src: reader.result,
+        x: 120,
+        y: 120,
+        w: 240,
+        h: 180,
+        r: 0
+      });
+
+      redraw();        // ⚡ natychmiast
+      saveHistory();   // lokalne undo
+
+      // 🔥 2. sync do Firebase z opóźnieniem
+      setTimeout(saveToFirebase, 0);
+    };
+
+    reader.readAsDataURL(file);
+    break; // tylko jeden obraz
+  }
 });
 
 // ================= BUTTONS =================
 pen.onclick=()=>{ tool="pen"; document.getElementById("colors").classList.toggle("active"); };
 eraser.onclick=()=>{ tool="eraser"; document.getElementById("colors").classList.remove("active"); };
 clear.onclick=()=>{ pages[currentPage]={strokes:[],images:[]}; redraw(); saveHistory(); saveToFirebase(); };
-addPage.onclick=()=>{ pages.push({strokes:[],images:[]}); currentPage=pages.length-1; redraw(); saveHistory(); saveToFirebase(); };
+addPage.onclick = () => {
+  pages.push({
+    strokes: [],
+    images: []
+  });
+
+  currentPage = pages.length - 1; // zawsze nowa = ostatnia
+  redraw();
+  saveToFirebase();
+};
 save.onclick=savePDF;
 document.querySelectorAll("#colors span").forEach(c=>{ c.onclick=()=>{ penColor=c.dataset.color; tool="pen"; document.getElementById("colors").classList.remove("active"); }; });
 
@@ -182,12 +271,9 @@ function savePDF(){
   pdf.save("Misiowa_Tablica.pdf");
 }
 
-// ================= FIREBASE =================
-function saveToFirebase(){ pagesRef.set(pages); }
-pagesRef.on("value",snap=>{
-  if(snap.exists()){ pages=snap.val(); if(!pages[currentPage]) currentPage=0; redraw(); }
-  else{ pages=[{strokes:[],images:[]}]; currentPage=0; saveToFirebase(); redraw(); }
-});
+
+
+
 
 // ================= UNDO/REDO =================
 window.addEventListener("keydown",e=>{ if(e.ctrlKey&&e.key==="z") undo(); if(e.ctrlKey&&e.key==="y") redo(); });
